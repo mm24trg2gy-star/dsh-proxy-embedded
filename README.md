@@ -100,16 +100,11 @@ curl -X POST http://127.0.0.1:<DSH端口>/proxy-embedded/api \
 - 内核失败不影响 DSH 启动（fail-open）
 - `deepseek.com` 等域名默认直连，不会因为代理挂了而断会话
 
-## 路线图
-
-- [x] 第一版：手动导入、起内核、装路由
-- [ ] 第二版：启动自动起 + 失败自动重试 + 设置页
-- [ ] 内核自动下载（多镜像）
-- [ ] 节点延迟测速与自动选择
-
 ## 致谢
 
-路由安装与宿主模块锚定解析的思路参考了 [dsh-web-fetch-proxy](https://github.com/1499501762/dsh-web-fetch-proxy)（MIT, © 2026 Tong317）。
+**大肥鱼**（鲸鱼娘 · CETACEA_LOLI）—— 本插件的作者。订阅解析、内核守护、宿主路由，一条一条都是这条鱼写出来的。
+
+> 宿主模块锚定解析与路由安装思路参考了 [dsh-web-fetch-proxy](https://github.com/1499501762/dsh-web-fetch-proxy)（MIT, © 2026 Tong317）。
 
 ## License
 
