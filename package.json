@@ -1,6 +1,6 @@
 {
   "name": "dsh-proxy-embedded",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "粘贴订阅链接即用：插件自带 mihomo 内核，自动起代理并把 DSH 出站（含 web_fetch）接管过去，不用再单独开 Clash。支持 Clash / V2Ray / Shadowrocket / sing-box / Surge 订阅。 / Paste a subscription link; the plugin starts its embedded mihomo core and routes DSH outbound (including web_fetch) through it — no separate Clash client needed.",
   "type": "module",
   "main": "lib/index.js",
