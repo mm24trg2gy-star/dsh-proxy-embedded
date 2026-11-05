@@ -1,0 +1,14 @@
+# npm 包要带上内核（bin/mihomo.exe），所以这里**不排除 bin/**
+node_modules/
+test/
+*.log
+*.bak
+*.bak-*
+config.json
+config.yaml
+test-config.yaml
+test-out.log
+test-err.log
+.vscode/
+.idea/
+.git/

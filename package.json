@@ -1,7 +1,7 @@
 {
   "name": "dsh-proxy-embedded",
   "version": "0.1.0",
-  "description": "DSH 插件：自带 mihomo 内核，粘贴订阅链接即可起代理，DSH 出站（含 web_fetch）自动走它。 / DSH plugin with an embedded mihomo core: paste a subscription link, the plugin starts the proxy and routes DSH outbound traffic through it.",
+  "description": "粘贴订阅链接即用：插件自带 mihomo 内核，自动起代理并把 DSH 出站（含 web_fetch）接管过去，不用再单独开 Clash。支持 Clash / V2Ray / Shadowrocket / sing-box / Surge 订阅。 / Paste a subscription link; the plugin starts its embedded mihomo core and routes DSH outbound (including web_fetch) through it — no separate Clash client needed.",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -53,7 +53,7 @@
   },
   "dsh": {
     "category": "extension",
-    "displayName": "内嵌代理",
+    "displayName": "内嵌代理 · 订阅即用",
     "bundle": {
       "patch": "./cordis.patch.yml"
     },
