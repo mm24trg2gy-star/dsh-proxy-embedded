@@ -21,10 +21,18 @@ DSH 插件：**自带 mihomo 内核**，粘贴一个订阅链接就能起代理�
 ## 安装
 
 ```bash
-dsh plugin --profile desktop add link:E:\dsh\proxy-embedded
+dsh plugin --profile desktop add github:mm24trg2gy-star/dsh-proxy-embedded
 ```
 
 装完重启 DSH。
+
+### 内核
+
+仓库**不包含内核二进制**（`.gitignore` 已排除 `bin/*.exe`，避免仓库膨胀）。三种方式任选：
+
+1. **复用已有 Clash Verge**：装过 Clash Verge 的话，插件会自动找到 `D:\Clash Verge\verge-mihomo.exe`，无需额外操作；
+2. **手动放一份**：把 `mihomo.exe` 放进插件目录的 `bin/`；
+3. **设置里指定**：`config.json` 的 `kernelPath` 填绝对路径。
 
 ## 使用（第一版：手动）
 
