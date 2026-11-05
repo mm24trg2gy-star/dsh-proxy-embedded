@@ -1,0 +1,64 @@
+{
+  "name": "dsh-proxy-embedded",
+  "version": "0.1.0",
+  "description": "DSH 插件：自带 mihomo 内核，粘贴订阅链接即可起代理，DSH 出站（含 web_fetch）自动走它。 / DSH plugin with an embedded mihomo core: paste a subscription link, the plugin starts the proxy and routes DSH outbound traffic through it.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./core": "./lib/core.js",
+    "./subscription": "./lib/subscription.js",
+    "./convert": "./lib/convert.js",
+    "./harness": "./lib/harness.js",
+    "./route": "./lib/route.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "bin",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test"
+  },
+  "keywords": [
+    "deepseek",
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "proxy",
+    "mihomo",
+    "clash",
+    "subscription",
+    "订阅",
+    "代理"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.18.1"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-http-proxy": ">=0.1.5-rc.2",
+    "@deepseek-ai/dsh-launch-environment": ">=0.1.5-rc.2",
+    "@deepseek-ai/schemastery": ">=3.18.2"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/dsh-http-proxy": { "optional": true },
+    "@deepseek-ai/dsh-launch-environment": { "optional": true },
+    "@deepseek-ai/schemastery": { "optional": true }
+  },
+  "dsh": {
+    "category": "extension",
+    "displayName": "内嵌代理",
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "engines": {
+      "dsh": ">=0.1.5-rc.1"
+    }
+  }
+}
