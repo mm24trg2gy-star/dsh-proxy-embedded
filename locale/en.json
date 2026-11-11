@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Embedded Proxy",
+    "description": "Paste a subscription link; the plugin starts its embedded mihomo core and routes DSH outbound (including web_fetch) through it — no separate Clash client needed."
+  }
+}

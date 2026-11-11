@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "内嵌代理",
+    "description": "粘贴订阅链接即用：插件自带 mihomo 内核，自动起代理并接管 DSH 出站（含 web_fetch），不用再单独开 Clash。支持 Clash / V2Ray / sing-box / Surge 订阅。"
+  }
+}
