@@ -1,6 +1,6 @@
 {
   "name": "dsh-proxy-embedded",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "粘贴订阅链接即用：插件自带 mihomo 内核，自动起代理并把 DSH 出站（含 web_fetch）接管过去，不用再单独开 Clash。支持 Clash / V2Ray / Shadowrocket / sing-box / Surge 订阅。 / Paste a subscription link; the plugin starts its embedded mihomo core and routes DSH outbound (including web_fetch) through it — no separate Clash client needed.",
   "type": "module",
   "main": "lib/index.js",
@@ -49,9 +49,15 @@
     "@deepseek-ai/schemastery": ">=3.18.2"
   },
   "peerDependenciesMeta": {
-    "@deepseek-ai/dsh-http-proxy": { "optional": true },
-    "@deepseek-ai/dsh-launch-environment": { "optional": true },
-    "@deepseek-ai/schemastery": { "optional": true }
+    "@deepseek-ai/dsh-http-proxy": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-launch-environment": {
+      "optional": true
+    },
+    "@deepseek-ai/schemastery": {
+      "optional": true
+    }
   },
   "dsh": {
     "category": "extension",
@@ -62,5 +68,13 @@
     "engines": {
       "dsh": ">=0.1.5-rc.1"
     }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mm24trg2gy-star/dsh-proxy-embedded.git"
+  },
+  "homepage": "https://github.com/mm24trg2gy-star/dsh-proxy-embedded#readme",
+  "bugs": {
+    "url": "https://github.com/mm24trg2gy-star/dsh-proxy-embedded/issues"
   }
 }
