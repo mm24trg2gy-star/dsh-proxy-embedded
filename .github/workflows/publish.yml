@@ -1,0 +1,28 @@
+# 推 v* 标签时自动发布到 npm（Trusted Publishing / OIDC，无需 token）
+# 前置：npm 包页面 → Settings → Trusted Publisher 登记
+#   GitHub Actions / mm24trg2gy-star / dsh-proxy-embedded / publish.yml
+name: publish
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Upgrade npm
+        run: npm install -g npm@latest
+
+      - name: Publish
+        run: npm publish --provenance --access public
