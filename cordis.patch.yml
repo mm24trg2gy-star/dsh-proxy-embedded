@@ -1,7 +1,7 @@
 # dsh-proxy-embedded - bundle patch
 #
 # 把本插件插入 profile 的插件清单。
-# 安装：dsh plugin --profile desktop add link:E:\dsh\proxy-embedded
+# 安装：dsh plugin --profile desktop add link:/path/to/dsh-proxy-embedded
 #
 # 插件职责：
 #   1. 自带/复用 mihomo 内核；

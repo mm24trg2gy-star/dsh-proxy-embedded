@@ -30,7 +30,7 @@ dsh plugin --profile desktop add github:mm24trg2gy-star/dsh-proxy-embedded
 
 仓库**不包含内核二进制**（`.gitignore` 已排除 `bin/*.exe`，避免仓库膨胀）。三种方式任选：
 
-1. **复用已有 Clash Verge**：装过 Clash Verge 的话，插件会自动找到 `D:\Clash Verge\verge-mihomo.exe`，无需额外操作；
+1. **复用已有 Clash Verge**：装过 Clash Verge 的话，插件会在常见安装位置（`%LOCALAPPDATA%\Programs\Clash Verge`、`C:\Program Files\Clash Verge`、`C:\Program Files (x86)\Clash Verge`）自动找 `verge-mihomo.exe`，无需额外操作；
 2. **手动放一份**：把 `mihomo.exe` 放进插件目录的 `bin/`；
 3. **设置里指定**：`config.json` 的 `kernelPath` 填绝对路径。
 
