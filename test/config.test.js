@@ -146,3 +146,20 @@ test("groups keep probe parameters and dangling references are dropped", () => {
   assert.ok(!out.includes("GHOST"), "no dangling references");
   assert.ok(out.includes('"name":"PROXY"'), "default PROXY group is generated");
 });
+test("name conflicts and reference cycles are dropped", () => {
+  const text = [
+    "proxies:",
+    "  - {name: A, type: ss, server: 1.1.1.1, port: 443, cipher: aes-128-gcm, password: x}",
+    "proxy-groups:",
+    "  - {name: A, type: select, proxies: [A]}",
+    "  - {name: X, type: select, proxies: [Y]}",
+    "  - {name: Y, type: select, proxies: [X]}",
+    "rules:",
+    "  - MATCH,X",
+  ].join("\n");
+  const out = rewriteClashYaml(text, 7899);
+  assert.ok(typeof out === "string");
+  assert.ok(out.includes('"name":"PROXY"'), "default PROXY group generated");
+  assert.ok(!out.includes('"name":"X"'));
+  assert.ok(!out.includes('"name":"Y"'));
+});
