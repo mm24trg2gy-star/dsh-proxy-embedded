@@ -13,7 +13,8 @@
     "./route": "./lib/route.js",
     "./cordis.patch.yml": "./cordis.patch.yml",
     "./locale/*.json": "./locale/*.json",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./client": "./lib/client.js"
   },
   "files": [
     "lib",
@@ -67,6 +68,9 @@
     },
     "engines": {
       "dsh": ">=0.1.5-rc.1"
+    },
+    "client": {
+      "platform": "web"
     }
   },
   "repository": {
