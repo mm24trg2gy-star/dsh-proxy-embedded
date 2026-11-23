@@ -163,3 +163,33 @@ test("name conflicts and reference cycles are dropped", () => {
   assert.ok(!out.includes('"name":"X"'));
   assert.ok(!out.includes('"name":"Y"'));
 });
+test("multi-branch cycles are detected on any edge, not just the first", () => {
+  const text = [
+    "proxies:",
+    "  - {name: N, type: ss, server: 1.1.1.1, port: 443, cipher: aes-128-gcm, password: x}",
+    "proxy-groups:",
+    "  - {name: A, type: select, proxies: [B, C]}",
+    "  - {name: B, type: select, proxies: [N]}",
+    "  - {name: C, type: select, proxies: [A]}",
+    "rules:",
+    "  - MATCH,A",
+  ].join("\n");
+  const out = rewriteClashYaml(text, 7899);
+  assert.ok(typeof out === "string");
+  assert.ok(!out.includes('"name":"A"'), "A is part of the A<->C cycle");
+  assert.ok(!out.includes('"name":"C"'), "C is part of the A<->C cycle");
+  assert.ok(out.includes('"name":"B"'), "B only points at a node and must survive");
+});
+
+test("a node named PROXY does not collide with the generated default group", () => {
+  const text = [
+    "proxies:",
+    "  - {name: PROXY, type: ss, server: 1.1.1.1, port: 443, cipher: aes-128-gcm, password: x}",
+    "rules:",
+    "  - MATCH,PROXY",
+  ].join("\n");
+  const out = rewriteClashYaml(text, 7899);
+  assert.ok(typeof out === "string");
+  assert.ok(out.includes('"name":"PROXY_"'), "default group gets a non-colliding name");
+  assert.ok(!out.includes('"name":"PROXY","type":"select"'), "no group reuses the node name");
+});
