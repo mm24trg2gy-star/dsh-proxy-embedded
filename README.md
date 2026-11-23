@@ -1,8 +1,8 @@
 # dsh-proxy-embedded
 
-DSH 插件：**自带 mihomo 内核**，粘贴一个订阅链接就能起代理，DSH 的出站请求（包括 `web_fetch`）自动走它——不用再单独开 Clash。
+DSH 插件：**复用本机的 mihomo 内核**（或在 `bin/` 里自带一份），粘贴一个订阅链接就能起代理，DSH 的出站请求（包括 `web_fetch`）自动走它——不用再单独开 Clash。
 
-> 与 `dsh-outbound-proxy`、`dsh-web-fetch-proxy` 的区别：那些插件都要求「本机已经有代理在跑」，本插件把缺的那一半补上——**自己起内核**。
+> 与 `dsh-outbound-proxy`、`dsh-web-fetch-proxy` 的区别：那些插件都要求「本机已经有代理在跑」，本插件把缺的那一半补上——**自己起内核**（内核二进制不随 npm 包分发，见「内核」一节）。
 
 ## 为什么
 
@@ -34,11 +34,21 @@ dsh plugin --profile desktop add github:mm24trg2gy-star/dsh-proxy-embedded
 2. **手动放一份**：把 `mihomo.exe` 放进插件目录的 `bin/`；
 3. **设置里指定**：`config.json` 的 `kernelPath` 填绝对路径。
 
-## 使用（第一版：手动）
+## 使用
 
-两种方式：
+三种方式，任选：
 
-**1. 配置文件**
+**1. 网页（推荐）**
+
+DSH 启动后，浏览器打开：
+
+```
+http://127.0.0.1:<DSH端口>/proxy-embedded/api
+```
+
+粘贴订阅链接，点「启动」即可；页面还会显示状态，点「停止」可撤下代理。页面由插件自己提供，只监听回环。
+
+**2. 配置文件**
 
 编辑 `%USERPROFILE%\.dsh\proxy-embedded\config.json`：
 
@@ -54,7 +64,7 @@ dsh plugin --profile desktop add github:mm24trg2gy-star/dsh-proxy-embedded
 
 重启 DSH 后自动导入并启动。
 
-**2. HTTP 接口**（本机回环，仅 loopback 可访问）
+**3. HTTP 接口**（本机回环，仅 loopback 可访问）
 
 ```bash
 # 导入并启动
@@ -96,9 +106,11 @@ curl -X POST http://127.0.0.1:<DSH端口>/proxy-embedded/api \
 ## 安全
 
 - 只用本机回环接口，拒绝跨站请求
-- 代理链接含凭据，保存在本机 `~/.dsh/proxy-embedded/config.json`，请勿分享
-- 内核失败不影响 DSH 启动（fail-open）
-- `deepseek.com` 等域名默认直连，不会因为代理挂了而断会话
+- 代理链接含凭据，保存在本机 `~/.dsh/proxy-embedded/config.json`，请勿分享；网页不会回显已保存的链接
+- **订阅只提供节点，不提供策略**：Clash 订阅里的 `tun`、`listeners`、`proxy-providers`、`dns`、`external-controller` 等顶层块会被整段删除，`allow-lan`/`ipv6`/`mode` 强制回写安全基线
+- 回环、内网、链路本地地址始终直连（`IP-CIDR` 规则排在最前），不会把内网请求送出境
+- 启动新代理失败时**保留旧内核与旧路由**，不会把 DSH 出站打断
+- `deepseek.com` 默认直连，代理挂了也不影响会话
 
 ## 致谢
 
