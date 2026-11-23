@@ -130,3 +130,19 @@ test("subscription policy blocks never reach the rebuilt config", () => {
   assert.ok(!/^proxy-providers:/m.test(out));
   assert.ok(out.includes("allow-lan: false"));
 });
+test("groups keep probe parameters and dangling references are dropped", () => {
+  const text = [
+    "proxies:",
+    "  - {name: A, type: ss, server: 1.1.1.1, port: 443, cipher: aes-128-gcm, password: x}",
+    "proxy-groups:",
+    "  - {name: AUTO, type: url-test, url: 'http://probe', interval: 120, proxies: [A, GHOST]}",
+    "  - {name: ONLY, type: select, proxies: [GHOST]}",
+    "rules:",
+    "  - MATCH,ONLY",
+  ].join("\n");
+  const out = rewriteClashYaml(text, 7899);
+  assert.ok(typeof out === "string");
+  assert.ok(out.includes('"interval":120'), "url-test interval must survive the rebuild");
+  assert.ok(!out.includes("GHOST"), "no dangling references");
+  assert.ok(out.includes('"name":"PROXY"'), "default PROXY group is generated");
+});
