@@ -73,13 +73,14 @@ curl -X POST http://127.0.0.1:<DSH端口>/proxy-embedded/api \
   -d '{"action":"start","link":"https://你的订阅地址"}'
 
 # 状态
-curl -X POST http://127.0.0.1:<DSH端口>/proxy-embedded/api -d '{"action":"status"}'
+curl -X POST http://127.0.0.1:<DSH端口>/proxy-embedded/api -H 'content-type: application/json' -d '{"action":"status"}'
 
 # 停止
-curl -X POST http://127.0.0.1:<DSH端口>/proxy-embedded/api -d '{"action":"stop"}'
+curl -X POST http://127.0.0.1:<DSH端口>/proxy-embedded/api -H 'content-type: application/json' -d '{"action":"stop"}'
 
 # 保存配置（下次启动自动用）
 curl -X POST http://127.0.0.1:<DSH端口>/proxy-embedded/api \
+  -H "content-type: application/json" \
   -d '{"action":"save","link":"https://...","port":7899}'
 ```
 

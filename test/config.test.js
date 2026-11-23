@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { buildConfig, SAFE_RULES } from "../lib/core.js";
-import { rewriteClashYaml, dropTopLevelBlocks } from "../lib/convert.js";
+import { rewriteClashYaml, dropTopLevelBlocks, convert } from "../lib/convert.js";
 
 test("buildConfig emits YAML sequence items for proxies and groups", () => {
   const yaml = buildConfig({
@@ -88,4 +88,24 @@ test("dropTopLevelBlocks keeps nested content of surviving blocks", () => {
   assert.ok(!out.includes("  y: 2"));
   assert.ok(out.includes("c:"));
   assert.ok(out.includes("  z: 3"));
+});
+
+test("dropTopLevelBlocks also removes quoted top-level keys", () => {
+  const text = ["\"tun\":", "  enable: true", "proxies:", "  - {name: A, type: ss}"].join("\n");
+  const out = dropTopLevelBlocks(text, ["tun"]);
+  assert.ok(!out.includes("enable: true"));
+  assert.ok(!out.includes("\"tun\":"));
+  assert.ok(out.includes("proxies:"));
+});
+
+test("rewriteClashYaml refuses inline rules instead of producing a broken file", () => {
+  const text = ["proxies:", "  - {name: A, type: ss}", "rules: [MATCH,DIRECT]"].join("\n");
+  assert.equal(rewriteClashYaml(text, 7899), null);
+});
+
+test("convert reports a clear failure for configs it cannot sanitize", () => {
+  const text = ["proxies:", "  - {name: A, type: ss}", "rules: [MATCH,DIRECT]"].join("\n");
+  const result = convert("clash", text);
+  assert.equal(result.ok, false);
+  assert.match(result.reason, /无法安全清洗/);
 });
