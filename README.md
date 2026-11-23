@@ -38,15 +38,15 @@ dsh plugin --profile desktop add github:mm24trg2gy-star/dsh-proxy-embedded
 
 三种方式，任选：
 
-**1. 网页（推荐）**
+**1. 网页（在 DSH 里打开）**
 
-DSH 启动后，浏览器打开：
+插件把管理页挂在 DSH 自己的 Web 服务上，路径：
 
 ```
 http://127.0.0.1:<DSH端口>/proxy-embedded/api
 ```
 
-粘贴订阅链接，点「启动」即可；页面还会显示状态，点「停止」可撤下代理。页面由插件自己提供，只监听回环。
+**必须从 DSH 界面（或带 DSH 会话凭据的上下文）打开**：入口走宿主准入，直接粘到普通浏览器地址栏、或用本机 `curl` 裸访问，会被 DSH 以 401/403 拒绝——这是设计如此，不是坏了。页面能粘贴订阅链接、点「启动」/「停止」并显示状态。
 
 **2. 配置文件**
 
@@ -64,24 +64,24 @@ http://127.0.0.1:<DSH端口>/proxy-embedded/api
 
 重启 DSH 后自动导入并启动。
 
-**3. HTTP 接口**（本机回环，仅 loopback 可访问）
+**3. HTTP 接口（仅限 DSH 会话）**
+
+接口和页面走同一个入口，**同样受 DSH 宿主准入保护**：只有通过 DSH 鉴权的请求才会被处理，本机其他程序、普通浏览器标签页、裸 `curl` 一律 401/403。
+
+请求体必须是 `application/json`。下面是接口形状（能否发出去取决于你是否在 DSH 会话里）：
 
 ```bash
 # 导入并启动
-curl -X POST http://127.0.0.1:<DSH端口>/proxy-embedded/api \
-  -H "content-type: application/json" \
-  -d '{"action":"start","link":"https://你的订阅地址"}'
+POST /proxy-embedded/api  {"action":"start","link":"https://你的订阅地址"}
 
 # 状态
-curl -X POST http://127.0.0.1:<DSH端口>/proxy-embedded/api -H 'content-type: application/json' -d '{"action":"status"}'
+POST /proxy-embedded/api  {"action":"status"}
 
 # 停止
-curl -X POST http://127.0.0.1:<DSH端口>/proxy-embedded/api -H 'content-type: application/json' -d '{"action":"stop"}'
+POST /proxy-embedded/api  {"action":"stop"}
 
 # 保存配置（下次启动自动用）
-curl -X POST http://127.0.0.1:<DSH端口>/proxy-embedded/api \
-  -H "content-type: application/json" \
-  -d '{"action":"save","link":"https://...","port":7899}'
+POST /proxy-embedded/api  {"action":"save","link":"https://...","port":7899}
 ```
 
 ## 订阅格式支持
@@ -106,7 +106,8 @@ curl -X POST http://127.0.0.1:<DSH端口>/proxy-embedded/api \
 
 ## 安全
 
-- 只用本机回环接口，拒绝跨站请求
+- **入口只对 DSH 会话开放**：handler 第一层先过宿主准入（`ctx.connection.requestRejection`），再叠加插件的回环 / Origin / JSON 校验；本机其他程序、普通网页一律被拒
+- 拿不到 DSH 准入服务时按「拒绝」处理（503），不会退化成放行
 - 代理链接含凭据，保存在本机 `~/.dsh/proxy-embedded/config.json`，请勿分享；网页不会回显已保存的链接
 - **订阅只提供节点，不提供策略**：Clash 订阅先用 YAML 解析器读出来，只保留节点字段白名单、校验过的组引用和规则；`tun`、`listeners`、`proxy-providers`、`dns` 等策略一律不进入最终配置，监听与安全基线由插件生成。解析失败或写法不可安全处理时直接拒绝，不动现有实例
 - 回环、内网、链路本地地址始终直连（`IP-CIDR` 规则排在最前），不会把内网请求送出境
