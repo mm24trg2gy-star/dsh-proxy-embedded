@@ -108,7 +108,7 @@ curl -X POST http://127.0.0.1:<DSH端口>/proxy-embedded/api \
 
 - 只用本机回环接口，拒绝跨站请求
 - 代理链接含凭据，保存在本机 `~/.dsh/proxy-embedded/config.json`，请勿分享；网页不会回显已保存的链接
-- **订阅只提供节点，不提供策略**：Clash 订阅里的 `tun`、`listeners`、`proxy-providers`、`dns`、`external-controller` 等顶层块会被整段删除，`allow-lan`/`ipv6`/`mode` 强制回写安全基线
+- **订阅只提供节点，不提供策略**：Clash 订阅先用 YAML 解析器读出来，只保留节点字段白名单、校验过的组引用和规则；`tun`、`listeners`、`proxy-providers`、`dns` 等策略一律不进入最终配置，监听与安全基线由插件生成。解析失败或写法不可安全处理时直接拒绝，不动现有实例
 - 回环、内网、链路本地地址始终直连（`IP-CIDR` 规则排在最前），不会把内网请求送出境
 - 启动新代理失败时**保留旧内核与旧路由**，不会把 DSH 出站打断
 - `deepseek.com` 默认直连，代理挂了也不影响会话

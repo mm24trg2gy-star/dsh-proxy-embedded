@@ -98,14 +98,35 @@ test("dropTopLevelBlocks also removes quoted top-level keys", () => {
   assert.ok(out.includes("proxies:"));
 });
 
-test("rewriteClashYaml refuses inline rules instead of producing a broken file", () => {
-  const text = ["proxies:", "  - {name: A, type: ss}", "rules: [MATCH,DIRECT]"].join("\n");
-  assert.equal(rewriteClashYaml(text, 7899), null);
+test("inline rules are parsed and rebuilt with the safe baseline", () => {
+  const text = ["proxies:", "  - {name: A, type: ss, server: 1.1.1.1, port: 443, cipher: aes-128-gcm, password: x}", "rules: ['MATCH,DIRECT']"].join("\n");
+  const out = rewriteClashYaml(text, 7899);
+  assert.ok(typeof out === "string");
+  assert.ok(out.includes("IP-CIDR,127.0.0.0/8,DIRECT,no-resolve"));
+  assert.ok(out.includes("MATCH,DIRECT"));
 });
 
-test("convert reports a clear failure for configs it cannot sanitize", () => {
-  const text = ["proxies:", "  - {name: A, type: ss}", "rules: [MATCH,DIRECT]"].join("\n");
+test("convert reports a clear failure when the subscription is not usable YAML", () => {
+  const text = "proxies: [ this is not: a mapping";
   const result = convert("clash", text);
   assert.equal(result.ok, false);
   assert.match(result.reason, /无法安全清洗/);
+});
+
+test("subscription policy blocks never reach the rebuilt config", () => {
+  const text = [
+    "tun: {enable: true}",
+    "listeners: [{name: x, port: 1}]",
+    "proxy-providers: {p: {url: 'http://169.254.169.254/'}}",
+    "proxies:",
+    "  - {name: A, type: ss, server: 1.1.1.1, port: 443, cipher: aes-128-gcm, password: x}",
+    "rules:",
+    "  - MATCH,DIRECT",
+  ].join("\n");
+  const out = rewriteClashYaml(text, 7899);
+  assert.ok(typeof out === "string");
+  assert.ok(!/^tun:/m.test(out));
+  assert.ok(!/^listeners:/m.test(out));
+  assert.ok(!/^proxy-providers:/m.test(out));
+  assert.ok(out.includes("allow-lan: false"));
 });
