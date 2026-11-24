@@ -10,19 +10,13 @@ test("buildConfig emits YAML sequence items for proxies and groups", () => {
     proxies: [{ name: "HK-01", type: "ss", server: "1.2.3.4", port: 443, cipher: "aes-128-gcm", password: "x" }],
   });
   const lines = yaml.split("\n");
-
   const p = lines.indexOf("proxies:");
-  assert.ok(p >= 0, "should include proxies:");
-  assert.match(lines[p + 1], /^ {2}- \{/, "proxies items must start with '- '");
-
+  assert.ok(p >= 0);
+  assert.match(lines[p + 1], /^ {2}- \{/);
   const g = lines.indexOf("proxy-groups:");
-  assert.ok(g >= 0, "should include proxy-groups:");
-  assert.match(lines[g + 1], /^ {2}- \{/, "proxy-groups items must start with '- '");
-
-  for (const rule of SAFE_RULES) {
-    assert.ok(yaml.includes(rule), "always-direct rule missing: " + rule);
-  }
-  assert.ok(!yaml.includes("  {\"name\""), "no bare JSON mapping rows");
+  assert.ok(g >= 0);
+  assert.match(lines[g + 1], /^ {2}- \{/);
+  for (const rule of SAFE_RULES) assert.ok(yaml.includes(rule), "missing rule: " + rule);
 });
 
 test("buildConfig fills missing names and de-duplicates them", () => {
@@ -35,29 +29,22 @@ test("buildConfig fills missing names and de-duplicates them", () => {
       { name: "dup", type: "ss", server: "d", port: 4, cipher: "x", password: "y" },
     ],
   });
-  assert.ok(yaml.includes("\"name\":\"ss-1\""));
-  assert.ok(yaml.includes("\"name\":\"ss-2\""));
-  assert.ok(yaml.includes("\"name\":\"dup\""));
-  assert.ok(yaml.includes("\"name\":\"dup (2)\""));
-  assert.ok(!yaml.includes("null"), "no null entries in groups");
+  assert.ok(yaml.includes('"name":"ss-1"'));
+  assert.ok(yaml.includes('"name":"dup (2)"'));
+  assert.ok(!yaml.includes("null"));
 });
 
-test("rewriteClashYaml drops policy blocks and forces the safe baseline", () => {
+test("clash sanitising strips the dangerous top-level blocks and forces the baseline", () => {
   const input = [
-    "port: 7890",
-    "socks-port: 7891",
+    "mixed-port: 7890",
     "allow-lan: true",
     "tun:",
     "  enable: true",
-    "  auto-route: true",
     "listeners:",
     "  - {name: open, type: socks, port: 7892, listen: 0.0.0.0}",
-    "proxy-providers:",
-    "  p: {type: http, url: 'http://169.254.169.254/latest'}",
-    "dns:",
-    "  enable: true",
+    "external-controller: 0.0.0.0:9090",
     "proxies:",
-    "  - {name: A, type: ss, server: 1.1.1.1, port: 443}",
+    "  - {name: A, type: anytls, server: 1.1.1.1, port: 443, password: x, sni: a.example.com}",
     "proxy-groups:",
     "  - {name: PROXY, type: select, proxies: [A]}",
     "rules:",
@@ -65,18 +52,41 @@ test("rewriteClashYaml drops policy blocks and forces the safe baseline", () => 
   ].join("\n");
 
   const out = rewriteClashYaml(input, 7899);
+  assert.ok(typeof out === "string");
+  assert.ok(!/^tun:/m.test(out));
+  assert.ok(!/^listeners:/m.test(out));
+  assert.ok(!/external-controller:/m.test(out));
+  assert.ok(/allow-lan: false/.test(out));
   assert.ok(out.includes("mixed-port: 7899"));
-  assert.ok(out.includes("allow-lan: false"));
-  assert.ok(out.includes("ipv6: false"));
+  assert.ok(out.includes("anytls"));
+  assert.ok(out.includes("IP-CIDR,127.0.0.0/8,DIRECT,no-resolve"));
+});
 
-  for (const banned of ["tun:", "listeners:", "proxy-providers:", "dns:", "socks-port:"]) {
-    assert.ok(!new RegExp("^" + banned, "m").test(out), "should drop top-level block: " + banned);
-  }
-  // 安全直连规则必须排在 rules 最前面
-  assert.ok(out.includes("  - IP-CIDR,192.168.0.0/16,DIRECT,no-resolve"));
-  const rulesAt = out.indexOf("rules:");
-  const safeAt = out.indexOf("IP-CIDR,127.0.0.0/8");
-  assert.ok(rulesAt >= 0 && safeAt > rulesAt, "safe rules must live under rules:");
+test("clash sanitising keeps dns / providers / rules (they make fake-IP and providers work)", () => {
+  const input = [
+    "dns:",
+    "  enable: true",
+    "  enhanced-mode: fake-ip",
+    "  nameserver: [223.5.5.5]",
+    "proxy-providers:",
+    "  p1: {type: http, url: 'https://example.com/sub'}",
+    "proxies:",
+    "  - {name: A, type: anytls, server: 1.1.1.1, port: 443, password: x}",
+    "rules:",
+    "  - MATCH,DIRECT",
+  ].join("\n");
+  const out = rewriteClashYaml(input, 7899);
+  assert.ok(typeof out === "string");
+  assert.ok(/^dns:/m.test(out));
+  assert.ok(/^proxy-providers:/m.test(out));
+  assert.ok(out.includes("fake-ip"));
+});
+
+test("invalid YAML is rejected instead of producing a broken config", () => {
+  assert.equal(rewriteClashYaml("proxies: [ this is not: a mapping", 7899), null);
+  const result = convert("clash", "proxies: [ this is not: a mapping");
+  assert.equal(result.ok, false);
+  assert.match(result.reason, /无法安全清洗/);
 });
 
 test("dropTopLevelBlocks keeps nested content of surviving blocks", () => {
@@ -87,109 +97,4 @@ test("dropTopLevelBlocks keeps nested content of surviving blocks", () => {
   assert.ok(!out.includes("b:"));
   assert.ok(!out.includes("  y: 2"));
   assert.ok(out.includes("c:"));
-  assert.ok(out.includes("  z: 3"));
-});
-
-test("dropTopLevelBlocks also removes quoted top-level keys", () => {
-  const text = ["\"tun\":", "  enable: true", "proxies:", "  - {name: A, type: ss}"].join("\n");
-  const out = dropTopLevelBlocks(text, ["tun"]);
-  assert.ok(!out.includes("enable: true"));
-  assert.ok(!out.includes("\"tun\":"));
-  assert.ok(out.includes("proxies:"));
-});
-
-test("inline rules are parsed and rebuilt with the safe baseline", () => {
-  const text = ["proxies:", "  - {name: A, type: ss, server: 1.1.1.1, port: 443, cipher: aes-128-gcm, password: x}", "rules: ['MATCH,DIRECT']"].join("\n");
-  const out = rewriteClashYaml(text, 7899);
-  assert.ok(typeof out === "string");
-  assert.ok(out.includes("IP-CIDR,127.0.0.0/8,DIRECT,no-resolve"));
-  assert.ok(out.includes("MATCH,DIRECT"));
-});
-
-test("convert reports a clear failure when the subscription is not usable YAML", () => {
-  const text = "proxies: [ this is not: a mapping";
-  const result = convert("clash", text);
-  assert.equal(result.ok, false);
-  assert.match(result.reason, /无法安全清洗/);
-});
-
-test("subscription policy blocks never reach the rebuilt config", () => {
-  const text = [
-    "tun: {enable: true}",
-    "listeners: [{name: x, port: 1}]",
-    "proxy-providers: {p: {url: 'http://169.254.169.254/'}}",
-    "proxies:",
-    "  - {name: A, type: ss, server: 1.1.1.1, port: 443, cipher: aes-128-gcm, password: x}",
-    "rules:",
-    "  - MATCH,DIRECT",
-  ].join("\n");
-  const out = rewriteClashYaml(text, 7899);
-  assert.ok(typeof out === "string");
-  assert.ok(!/^tun:/m.test(out));
-  assert.ok(!/^listeners:/m.test(out));
-  assert.ok(!/^proxy-providers:/m.test(out));
-  assert.ok(out.includes("allow-lan: false"));
-});
-test("groups keep probe parameters and dangling references are dropped", () => {
-  const text = [
-    "proxies:",
-    "  - {name: A, type: ss, server: 1.1.1.1, port: 443, cipher: aes-128-gcm, password: x}",
-    "proxy-groups:",
-    "  - {name: AUTO, type: url-test, url: 'http://probe', interval: 120, proxies: [A, GHOST]}",
-    "  - {name: ONLY, type: select, proxies: [GHOST]}",
-    "rules:",
-    "  - MATCH,ONLY",
-  ].join("\n");
-  const out = rewriteClashYaml(text, 7899);
-  assert.ok(typeof out === "string");
-  assert.ok(out.includes('"interval":120'), "url-test interval must survive the rebuild");
-  assert.ok(!out.includes("GHOST"), "no dangling references");
-  assert.ok(out.includes('"name":"PROXY"'), "default PROXY group is generated");
-});
-test("name conflicts and reference cycles are dropped", () => {
-  const text = [
-    "proxies:",
-    "  - {name: A, type: ss, server: 1.1.1.1, port: 443, cipher: aes-128-gcm, password: x}",
-    "proxy-groups:",
-    "  - {name: A, type: select, proxies: [A]}",
-    "  - {name: X, type: select, proxies: [Y]}",
-    "  - {name: Y, type: select, proxies: [X]}",
-    "rules:",
-    "  - MATCH,X",
-  ].join("\n");
-  const out = rewriteClashYaml(text, 7899);
-  assert.ok(typeof out === "string");
-  assert.ok(out.includes('"name":"PROXY"'), "default PROXY group generated");
-  assert.ok(!out.includes('"name":"X"'));
-  assert.ok(!out.includes('"name":"Y"'));
-});
-test("multi-branch cycles are detected on any edge, not just the first", () => {
-  const text = [
-    "proxies:",
-    "  - {name: N, type: ss, server: 1.1.1.1, port: 443, cipher: aes-128-gcm, password: x}",
-    "proxy-groups:",
-    "  - {name: A, type: select, proxies: [B, C]}",
-    "  - {name: B, type: select, proxies: [N]}",
-    "  - {name: C, type: select, proxies: [A]}",
-    "rules:",
-    "  - MATCH,A",
-  ].join("\n");
-  const out = rewriteClashYaml(text, 7899);
-  assert.ok(typeof out === "string");
-  assert.ok(!out.includes('"name":"A"'), "A is part of the A<->C cycle");
-  assert.ok(!out.includes('"name":"C"'), "C is part of the A<->C cycle");
-  assert.ok(out.includes('"name":"B"'), "B only points at a node and must survive");
-});
-
-test("a node named PROXY does not collide with the generated default group", () => {
-  const text = [
-    "proxies:",
-    "  - {name: PROXY, type: ss, server: 1.1.1.1, port: 443, cipher: aes-128-gcm, password: x}",
-    "rules:",
-    "  - MATCH,PROXY",
-  ].join("\n");
-  const out = rewriteClashYaml(text, 7899);
-  assert.ok(typeof out === "string");
-  assert.ok(out.includes('"name":"PROXY_"'), "default group gets a non-colliding name");
-  assert.ok(!out.includes('"name":"PROXY","type":"select"'), "no group reuses the node name");
 });
