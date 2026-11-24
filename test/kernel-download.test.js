@@ -29,9 +29,12 @@ test("chooseAsset falls back to the compatible build and rejects unrelated asset
 
 test("normalizeDownloadUrl accepts http(s) only", () => {
   assert.equal(normalizeDownloadUrl("https://example.com/a.zip"), "https://example.com/a.zip");
-  assert.equal(normalizeDownloadUrl("http://example.com/a.zip"), "http://example.com/a.zip");
+  assert.equal(normalizeDownloadUrl("http://example.com/a.zip"), null);
   assert.equal(normalizeDownloadUrl("file:///C:/a.zip"), null);
   assert.equal(normalizeDownloadUrl("ftp://example.com/a.zip"), null);
   assert.equal(normalizeDownloadUrl("   "), null);
   assert.equal(normalizeDownloadUrl(undefined), null);
+  assert.equal(normalizeDownloadUrl("https://127.0.0.1/a.zip"), null);
+  assert.equal(normalizeDownloadUrl("https://192.168.1.5/a.zip"), null);
+  assert.equal(normalizeDownloadUrl("https://user:pass@example.com/a.zip"), null);
 });
