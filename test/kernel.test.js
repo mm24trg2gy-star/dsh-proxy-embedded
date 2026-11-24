@@ -82,7 +82,41 @@ test("no temp files are left behind", () => {
     materializeKernel(source);
     const dir = path.join(home, "proxy-embedded", "bin");
     const names = readdirSync(dir);
-    assert.deepEqual(names, ["mihomo.exe"]);
+    assert.deepEqual(names.sort(), ["mihomo.exe", "mihomo.exe.sha256"]);
+  } finally {
+    process.env.DSH_HOME = previous;
+    rmSync(home, { recursive: true, force: true });
+  }
+});
+test("the runtime copy is refused when its recorded hash is missing", () => {
+  const home = mkdtempSync(path.join(os.tmpdir(), "dsh-kernel-"));
+  const previous = process.env.DSH_HOME;
+  process.env.DSH_HOME = home;
+  try {
+    const runtime = path.join(home, "proxy-embedded", "bin", "mihomo.exe");
+    mkdirSync(path.dirname(runtime), { recursive: true });
+    writeFileSync(runtime, "unvouched");
+    assert.throws(() => materializeKernel(runtime), /KERNEL_COPY_FAILED|cannot prepare|cannot prepare a private kernel copy/);
+  } finally {
+    process.env.DSH_HOME = previous;
+    rmSync(home, { recursive: true, force: true });
+  }
+});
+
+test("an unchanged source reuses the copy and writes a verification sidecar", () => {
+  const home = mkdtempSync(path.join(os.tmpdir(), "dsh-kernel-"));
+  const previous = process.env.DSH_HOME;
+  process.env.DSH_HOME = home;
+  try {
+    const source = path.join(home, "Clash Verge", "verge-mihomo.exe");
+    mkdirSync(path.dirname(source), { recursive: true });
+    writeFileSync(source, "same-bytes");
+    const first = materializeKernel(source);
+    const sidecar = readFileSync(first + ".sha256", "utf8").trim();
+    const second = materializeKernel(first); // 走运行期副本校验
+    assert.equal(second, first);
+    assert.equal(sidecar.length, 64);
+    assert.equal(readFileSync(second, "utf8"), "same-bytes");
   } finally {
     process.env.DSH_HOME = previous;
     rmSync(home, { recursive: true, force: true });
