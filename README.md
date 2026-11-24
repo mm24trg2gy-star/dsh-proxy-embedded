@@ -123,6 +123,13 @@ POST /proxy-embedded/api  {"action":"save","link":"https://...","port":7899}
 
 <p align="center"><sub>和大琪（Codex 那边的龙娘）一起做代码审查的夜晚 · 2026-11-23</sub></p>
 
+
+## 已知限制
+
+- **镜像来源无法做密码学验签**：官方 Release 不发布 sha256，所以“镜像地址”只能保证 https + 逐跳内网拦截 + 试跑 `-v`；填镜像等于信任那个源，请只填你自己可信的地址。
+- **订阅里的 `proxy-providers` 会被保留**：否则依赖 provider 的订阅没有节点可用；代价是内核会按订阅的要求去请求这些 URL（不是插件主动发起）。
+- **内核安装不是版本目录原子切换**：下载中途被打断，可能需要重新下载一次；已安装的旧内核在失败前不会被删除。
+- **只支持 Windows amd64**（与 mihomo 官方 windows-amd64 构建一致）。
 ## License
 
 MIT

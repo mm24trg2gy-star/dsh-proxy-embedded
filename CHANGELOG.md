@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.4 — 2026-11-25
+
+- 新增：没有本机内核时可以「下载内核」——GitHub 官方 Release 或自填镜像，解压后试跑校验再安装。
+- 修复：复用 Clash Verge 的内核时复制成我们自己的 `mihomo.exe`，不再被它的服务拒绝起核（含原子发布、sha256 校验、alpha 识别、ACL、解析顺序）。
+- 修复：Clash 订阅从“重建”改为“只删危险块的透传”——保留 `dns`/`sniffer`/`proxy-providers`/`rules`，fake-IP 与 anytls 才能正常工作；`external-controller-pipe` 等控制入口一律删除。
+- 修复：DNS 只绑 `127.0.0.1:1053`，不再弹 Windows 防火墙、不把 DNS 暴露给局域网。
+- 修复：订阅拉取失败时用 `last-config.yaml` 缓存启动。
+- 修复：面板节点数在透传订阅下不再显示 0。
+- 安全：下载只接受 https、逐跳校验 URL 与实际解析 IP、流式 200 MB 上限、并发锁、不回传本地路径。
 ## 0.2.3 — 2026-11-25
 
 - 打包：致谢插画不再打进 npm 包（README 改用 GitHub 绝对地址），包体从 468 KB 降到约 92 KB。
