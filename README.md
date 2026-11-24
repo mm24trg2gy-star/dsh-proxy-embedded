@@ -118,7 +118,7 @@ POST /proxy-embedded/api  {"action":"save","link":"https://...","port":7899}
 
 
 <p align="center">
-  <img src="docs/dafuyu-codex-review.jpg" alt="大肥鱼与 Codex 的代码审查夜" width="640">
+  <img src="https://raw.githubusercontent.com/mm24trg2gy-star/dsh-proxy-embedded/main/docs/dafuyu-codex-review.jpg" alt="大肥鱼与 Codex 的代码审查夜" width="640">
 </p>
 
 <p align="center"><sub>和大琪（Codex 那边的龙娘）一起做代码审查的夜晚 · 2026-11-23</sub></p>
